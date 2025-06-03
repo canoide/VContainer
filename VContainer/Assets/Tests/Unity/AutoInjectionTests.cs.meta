@@ -1,0 +1,91 @@
+fileFormatVersion: 2
+guid: f1b3a2c8d76e4f5a8c3b9d2e5a1f6b0a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData:
+  assetBundleName:
+  assetBundleVariant:
+ReferenceImporter:
+  labels:
+  - Test
+  referenceOptions: 0
+  platformData:
+  - first:
+      : Any
+    second:
+      enabled: 1
+      definedSymbols: []
+      noEngineReferences: 0
+  - first:
+      : Editor
+    second:
+      enabled: 1
+      definedSymbols: []
+      noEngineReferences: 0
+  - first:
+      Standalone: Win
+    second:
+      enabled: 1
+      settings:
+        Exclude Editor: 0
+  - first:
+      Standalone: Win64
+    second:
+      enabled: 1
+      settings:
+        Exclude Editor: 0
+  - first:
+      Standalone: Linux64
+    second:
+      enabled: 1
+      settings:
+        Exclude Editor: 0
+  - first:
+      Standalone: OSXUniversal
+    second:
+      enabled: 1
+      settings:
+        Exclude Editor: 0
+  - first:
+      Windows Store Apps: Universal Windows Platform
+    second:
+      enabled: 1
+      settings:
+        Exclude Editor: 0
+  asmToyUseUnityEditor: 1
+  references:
+  - Version: 2.0.0
+    Key: VContainer
+    Guid: bd1cf3287839447c9a9b8639385c10d6
+  - Version: 1.0.0
+    Key: UnityEngine.TestRunner
+    Guid: 0acc53776cfd4bf0aacc02189003b652
+  - Version: 1.0.0
+    Key: UnityEditor.TestRunner
+    Guid: 533a2f7378f94995ba23968a3488f213
+  - Version: 0.0.0
+    Key: nunit.framework
+    Guid: 2a6a55ef6f934123a1ebea8095c2a451
+  - Version: 0.0.0
+    Key: NSubstitute
+    Guid: 04812ba9a7c946c9bb9c7f8f74b8e934
+  - Version: 0.0.0
+    Key: Moq
+    Guid: 15f202475c1e4462946357d00474d014
+  defineConstraints:
+  - UNITY_INCLUDE_TESTS
+  overrideReferences: 0
+  incompatiblePlatforms: []
+  compatiblePlatforms:
+  - Editor
+  - AnyPlatform
+  supportsIncompatiblePlatforms: 0
+  isExplicitlyReferenced: 1
+  customReferences: 0
+  testAssemblies:
+  - VContainer.Tests.Unity
+  noEngineReferences: 0

@@ -1,0 +1,204 @@
+---
+title: Automatic Injection for Object.Instantiate()
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+VContainer typically promotes the use of `IObjectResolver.Instantiate()` for instantiating prefabs that require dependency injection. This method ensures that dependencies are resolved and injected into the newly created GameObject hierarchy as part of the instantiation process. Alternatively, for GameObjects instantiated via `UnityEngine.Object.Instantiate()`, manual injection can be performed post-instantiation using `resolver.InjectGameObject(yourGameObject)`.
+
+However, there are scenarios where direct usage of `UnityEngine.Object.Instantiate()` is preferred or necessary (e.g., integrating with existing systems, third-party assets, or for simplicity in certain contexts). For these cases, VContainer provides two helper utilities, `AutoInjectComponent` and `AutoInjectMonoBehaviour`, to facilitate a more 'automatic' injection experience.
+
+These utilities aim to bridge the gap by automatically triggering injection logic when a GameObject is instantiated using Unity's standard methods.
+
+## 1. `AutoInjectComponent`
+
+**What it is:**
+`AutoInjectComponent` is a `MonoBehaviour` component that you can add to any GameObject or Prefab. When the GameObject it's attached to awakens in the scene, this component automatically attempts to inject dependencies into itself and its entire child hierarchy.
+
+**How to use:**
+Simply add the `AutoInjectComponent` to your Prefab or GameObject via the Unity Inspector or by script.
+
+```csharp
+// Example: Adding AutoInjectComponent by script
+GameObject myPrefab = new GameObject("MyPrefabWithAutoInject"); // Example prefab
+myPrefab.AddComponent<AutoInjectComponent>();
+```
+
+**Behavior:**
+*   **Timing:** Triggers the injection process during its `Awake()` phase.
+*   **Scope Finding:**
+    1.  It first searches for the nearest `LifetimeScope` in its parent hierarchy using `GetComponentInParent<LifetimeScope>(true)` (the `true` argument includes inactive parents).
+    2.  If no parent `LifetimeScope` is found, it falls back to using the global Root `LifetimeScope` (typically resolved via `VContainerSettings.Instance.GetOrCreateRootLifetimeScopeInstance()`).
+*   **Injection:** Once a suitable `LifetimeScope` is found, it uses that scope's `IObjectResolver` to inject the entire GameObject hierarchy to which the `AutoInjectComponent` is attached by calling `resolver.InjectGameObject(this.gameObject)`.
+*   **Execution Order:** It has a `[DefaultExecutionOrder(-4900)]` attribute. This high precedence ensures its `Awake()` method (and thus the injection logic) typically runs after most `LifetimeScope` instances have initialized their containers but before most other scripts' `Awake()` or `Start()` methods. This makes injected dependencies available early in the lifecycle.
+*   **Skip Logic:** If the `AutoInjectComponent` detects that its GameObject has already been injected (e.g., by `IObjectResolver.Instantiate()`), its own injection logic in `Awake()` is skipped. This is tracked by the `_isInjected` internal flag and can be observed for testing via `AutoInjectComponent.WasSkipLogicHitLast`.
+
+
+**Example:**
+
+<Tabs>
+<TabItem value="csharp" label="C#">
+
+```csharp
+// Your MonoBehaviour that needs injection
+public class MyServiceConsumer : MonoBehaviour
+{
+    [Inject]
+    public IMyService MyService { get; private set; } // Can be property or field
+
+    void Start()
+    {
+        if (MyService != null)
+        {
+            MyService.DoSomething();
+            UnityEngine.Debug.Log("MyServiceConsumer: Service injected and used!");
+        }
+        else
+        {
+            UnityEngine.Debug.LogWarning("MyServiceConsumer: Service was NOT injected.");
+        }
+    }
+}
+
+// Interface for the service (example)
+public interface IMyService
+{
+    void DoSomething();
+}
+
+public class MyActualService : IMyService
+{
+    public void DoSomething()
+    {
+        UnityEngine.Debug.Log("MyActualService: Doing something!");
+    }
+}
+
+// --- Setup in a LifetimeScope (e.g., a parent scope or the root scope) ---
+// public class MySceneInstaller : IInstaller
+// {
+//     public void Install(IContainerBuilder builder)
+//     {
+//         builder.Register<IMyService, MyActualService>(Lifetime.Singleton);
+//     }
+// }
+
+// --- How to use with a prefab ---
+// 1. Create a Prefab.
+// 2. Add the `MyServiceConsumer` script to this Prefab.
+// 3. Add the `AutoInjectComponent` script to this Prefab.
+// 4. Ensure `IMyService` is registered in a `LifetimeScope` that will be a parent
+//    of the instantiated prefab, or in the Root `LifetimeScope`.
+//
+// When you instantiate this prefab in your code:
+//
+// public class PrefabSpawner : MonoBehaviour
+// {
+//     public GameObject PrefabWithAutoInject; // Assign your prefab in the Inspector
+//
+//     void Start()
+//     {
+//         // Ensure a LifetimeScope is present in this spawner's parent hierarchy or as a root scope
+//         // For example, this Spawner itself could be under a LifetimeScope that provides IMyService.
+//         var instance = UnityEngine.Object.Instantiate(PrefabWithAutoInject);
+//         // MyService should be injected into instance.GetComponent<MyServiceConsumer>()
+//         // by the time its Start() method is called, thanks to AutoInjectComponent.
+//     }
+// }
+```
+</TabItem>
+</Tabs>
+
+## 2. `AutoInjectMonoBehaviour`
+
+**What it is:**
+`AutoInjectMonoBehaviour` is an `abstract` base class. If your MonoBehaviours inherit from `AutoInjectMonoBehaviour` instead of the standard `MonoBehaviour`, they will automatically attempt to inject themselves (and their entire GameObject hierarchy) upon `Awake()`.
+
+**How to use:**
+Modify your MonoBehaviour's declaration to inherit from `AutoInjectMonoBehaviour`.
+
+<Tabs>
+<TabItem value="csharp" label="C#">
+
+```csharp
+// Your MonoBehaviour that needs injection, now inheriting from AutoInjectMonoBehaviour
+public class MyServiceConsumerInherited : AutoInjectMonoBehaviour // Inherit here
+{
+    [Inject]
+    public IMyService MyService { get; private set; }
+
+    // If you DON'T override Awake, the base class's Awake will handle injection.
+    // If you DO override Awake, you MUST call base.Awake().
+    protected override void Awake()
+    {
+        base.Awake(); // Crucial for triggering the base injection logic
+
+        // Custom Awake logic for this class can go here,
+        // after base.Awake() has potentially performed injection.
+        UnityEngine.Debug.Log("MyServiceConsumerInherited: Custom Awake logic running.");
+    }
+
+    void Start()
+    {
+        if (MyService != null)
+        {
+            MyService.DoSomething();
+            UnityEngine.Debug.Log("MyServiceConsumerInherited: Service injected and used!");
+        }
+        else
+        {
+            UnityEngine.Debug.LogWarning("MyServiceConsumerInherited: Service was NOT injected.");
+        }
+    }
+}
+
+// --- How to use with a prefab ---
+// 1. Create a Prefab.
+// 2. Add the `MyServiceConsumerInherited` script to this Prefab.
+//    (No need to add AutoInjectComponent separately).
+// 3. Ensure `IMyService` is registered in a parent LifetimeScope or the Root Scope.
+//
+// When you instantiate this prefab:
+// var instance = UnityEngine.Object.Instantiate(myPrefabWithInheritedAutoInject);
+// MyService should be injected into instance.GetComponent<MyServiceConsumerInherited>()
+// by the time its Start() is called.
+```
+</TabItem>
+</Tabs>
+
+**Behavior:**
+*   The injection mechanism (timing, scope-finding logic, use of `InjectGameObject`, `DefaultExecutionOrder`) is identical to `AutoInjectComponent`.
+*   The core injection logic is implemented in its `protected virtual void Awake()` method. If you override `Awake()` in your derived class, it's essential to call `base.Awake()` to ensure the injection process is triggered.
+*   **Skip Logic:** Similar to `AutoInjectComponent`, if the GameObject was already injected by `IObjectResolver.Instantiate()`, the base `Awake()` logic is skipped.
+
+## 3. Choosing Between Them
+
+*   **`AutoInjectComponent`**:
+    *   **Pros:** More flexible. It doesn't use up your single base class inheritance slot in C#, allowing you to inherit from other utility base classes if needed. It's generally the recommended approach for its composability.
+    *   **Cons:** Requires adding an extra component to each prefab that needs this behavior.
+
+*   **`AutoInjectMonoBehaviour`**:
+    *   **Pros:** Can be a convenient shorthand if your MonoBehaviour doesn't already need to inherit from another specific base class and you prefer the explicitness of the inheritance model.
+    *   **Cons:** Uses the base class slot. If you later need to inherit from a different utility class, you'd have to refactor.
+
+For most scenarios, `AutoInjectComponent` provides better decoupling and flexibility.
+
+## 4. Important Considerations & Logging
+
+*   **Opt-In Mechanisms:** These are opt-in features. Standard VContainer behavior does not change. You must explicitly add the `AutoInjectComponent` or inherit from `AutoInjectMonoBehaviour` for this automatic injection to occur with `Object.Instantiate()`.
+*   **`_isInjected` Flag (Internal):** Both utilities use an internal boolean flag (`_isInjected`).
+    *   This flag prevents their own injection logic from running multiple times if `Awake()` were to be called more than once on the same component instance.
+    *   More importantly, if the GameObject was already injected by `IObjectResolver.Instantiate()` (which is VContainer's primary way of handling prefab instantiation and injection), this flag will be true before `AutoInjectComponent.Awake()` or `AutoInjectMonoBehaviour.Awake()` runs. In such cases, their own injection logic is skipped, preventing redundant injection attempts and correctly deferring to VContainer's standard instantiation process.
+*   **Logging (New Behavior):** Both utilities now provide standardized log messages:
+    *   **Skipped (Already Injected/Processed):** `Debug.Log($"AutoInject: {gameObject.name} (ID: {gameObject.GetInstanceID()}) already processed by {this.GetType().Name}. Skipping auto-injection attempt.");`
+        *   For `AutoInjectComponent`, `AutoInjectComponent.WasSkipLogicHitLast` is also set to `true`.
+    *   **Success (Parent Scope):** `Debug.Log($"AutoInject: Injected {gameObject.name} (ID: {gameObject.GetInstanceID()}) using parent LifetimeScope {parentScope.name} (ID: {parentScope.gameObject.GetInstanceID()}).");`
+    *   **Success (Root Scope):** `Debug.Log($"AutoInject: Injected {gameObject.name} (ID: {gameObject.GetInstanceID()}) using ROOT LifetimeScope {rootScope.name} (ID: {rootScope.gameObject.GetInstanceID()}).");`
+    *   **Failed (No Scope):** `Debug.LogWarning($"AutoInject: Injection FAILED for {gameObject.name} (ID: {gameObject.GetInstanceID()}). No suitable LifetimeScope found or container not ready.");`
+    *   **Error (Root Scope Acquisition):** `Debug.LogWarning($"AutoInject: Error trying to get root LifetimeScope for {gameObject.name} (ID: {gameObject.GetInstanceID()}). VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");` (if applicable)
+    *   The previous verbose/error logging flags in `VContainerSettings` are no longer used by these components for their core operational logging.
+*   **Root Scope Configuration:** For the fallback to the Root `LifetimeScope` to function correctly, `VContainerSettings.Instance` must be accessible, and its `GetOrCreateRootLifetimeScopeInstance()` method should be able to provide a valid, built `LifetimeScope`.
+*   **Performance:** While convenient, these components add a small overhead during `Awake()` due to parent searching and component lookups. For performance-critical instantiation of many objects, consider using `IObjectResolver.Instantiate()` directly, which is generally more optimized. However, for most use cases, the impact of these auto-inject utilities is negligible.
+
+By understanding these utilities, you can choose the most appropriate method for handling dependency injection when working with `UnityEngine.Object.Instantiate()`, making your VContainer integration smoother in various development scenarios.
