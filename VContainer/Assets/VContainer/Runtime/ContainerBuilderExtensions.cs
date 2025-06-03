@@ -64,13 +64,6 @@ namespace VContainer
             object instance,
             Type implementationType)
             => builder.Register(new InstanceRegistrationBuilder(instance)).As(implementationType);
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RegistrationBuilder RegisterInstance(
-            this IContainerBuilder builder,
-            object instance,
-            Type implementationType)
-            => builder.Register(new InstanceRegistrationBuilder(instance)).As(implementationType);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RegistrationBuilder RegisterInstance<TInterface>(
