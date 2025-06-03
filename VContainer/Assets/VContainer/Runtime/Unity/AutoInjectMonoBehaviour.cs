@@ -1,56 +1,86 @@
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
+using VContainer; // Required for IObjectResolver
+using VContainer.Unity; // Required for LifetimeScope, VContainerSettings, LifetimeScopeTag, LifetimeScopeRegistry
 
 namespace VContainer.Unity
 {
-    [DefaultExecutionOrder(-4900)]
-    [Tooltip("Base class for MonoBehaviours that should automatically have dependencies injected by VContainer upon Awake. Finds a parent LifetimeScope or falls back to the root scope.")]
+    [DefaultExecutionOrder(-4900)] // Keep existing execution order
+    [Tooltip("Base class for MonoBehaviours that should automatically have dependencies injected by VContainer upon Awake. Can use a specific LifetimeScopeTag, a parent LifetimeScope, or falls back to the root scope.")]
     public abstract class AutoInjectMonoBehaviour : MonoBehaviour
     {
+        [Tooltip("Optional: Specify a LifetimeScopeTag to target a specific scope for injection. If null or the tagged scope is not found, it will try parent scope then root scope.")]
+        public LifetimeScopeTag TargetScopeTag = null;
+
         private bool _isInjected = false;
 
         protected virtual void Awake()
         {
             if (_isInjected)
             {
-                Debug.Log($"AutoInject: {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed by {this.GetType().Name}. Skipping auto-injection attempt.");
+                Debug.Log($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed by {this.GetType().Name}. Skipping auto-injection attempt.");
                 return;
             }
-            _isInjected = true;
 
-            var parentScope = GetComponentInParent<LifetimeScope>(true);
+            IObjectResolver resolver = null;
+            string injectionSource = "Unknown";
 
-            if (parentScope != null && parentScope.Container != null)
+            if (TargetScopeTag != null)
             {
-                parentScope.Container.InjectGameObject(this.gameObject);
-                Debug.Log($"AutoInject: Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) using parent LifetimeScope {parentScope.name} (ID: {parentScope.gameObject.GetInstanceID()}).");
-            }
-            else
-            {
-                LifetimeScope rootScope = null;
-                VContainerSettings settings = VContainerSettings.Instance;
-                if (settings != null)
+                resolver = LifetimeScopeRegistry.GetContainer(TargetScopeTag);
+                if (resolver != null)
                 {
-                    try
-                    {
-                        rootScope = settings.GetOrCreateRootLifetimeScopeInstance();
-                    }
-                    catch (System.Exception ex)
-                    {
-                        Debug.LogWarning($"AutoInject: Error trying to get root LifetimeScope for {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}). VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");
-                    }
-                }
-
-                if (rootScope != null && rootScope.Container != null)
-                {
-                    rootScope.Container.InjectGameObject(this.gameObject);
-                    Debug.Log($"AutoInject: Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) using ROOT LifetimeScope {rootScope.name} (ID: {rootScope.gameObject.GetInstanceID()}).");
+                    injectionSource = $"Tagged LifetimeScope with tag '{TargetScopeTag.name}'";
                 }
                 else
                 {
-                    Debug.LogWarning($"AutoInject: Injection FAILED for {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}). No suitable LifetimeScope found or container not ready.");
+                    Debug.LogWarning($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name}: Specified TargetScopeTag '{TargetScopeTag.name}' did not find a registered LifetimeScope. Falling back to parent/root scope search.");
                 }
+            }
+
+            // Fallback or if TargetScopeTag was not used/found
+            if (resolver == null)
+            {
+                var parentScope = GetComponentInParent<LifetimeScope>(true);
+                if (parentScope != null && parentScope.Container != null)
+                {
+                    resolver = parentScope.Container;
+                    injectionSource = $"parent LifetimeScope '{parentScope.name}' (ID: {parentScope.gameObject.GetInstanceID()})";
+                }
+                else
+                {
+                    LifetimeScope rootScope = null;
+                    VContainerSettings settings = VContainerSettings.Instance;
+                    if (settings != null)
+                    {
+                        try
+                        {
+                            rootScope = settings.GetOrCreateRootLifetimeScopeInstance();
+                        }
+                        catch (System.Exception ex)
+                        {
+                             Debug.LogWarning($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name}: Error trying to get root LifetimeScope. VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");
+                        }
+                    }
+
+                    if (rootScope != null && rootScope.Container != null)
+                    {
+                        resolver = rootScope.Container;
+                        injectionSource = $"ROOT LifetimeScope '{rootScope.name}' (ID: {rootScope.gameObject.GetInstanceID()})";
+                    }
+                }
+            }
+
+            if (resolver != null)
+            {
+                resolver.InjectGameObject(this.gameObject);
+                _isInjected = true; // Mark as injected AFTER successful injection.
+                Debug.Log($"[AutoInjectMonoBehaviour] Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name} using {injectionSource}.");
+            }
+            else
+            {
+                // Mark as processed even if failed, to prevent re-attempts by this Awake on this instance.
+                _isInjected = true;
+                Debug.LogWarning($"[AutoInjectMonoBehaviour] Injection FAILED for {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name}. No suitable LifetimeScope found or container not ready.");
             }
         }
     }
