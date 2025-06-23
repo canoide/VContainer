@@ -16,9 +16,12 @@ namespace VContainer.Unity
 
         void Awake()
         {
+            VContainerSettings settings = VContainerSettings.Instance;
+            var enableDiagnostics = settings.EnableDiagnostics;
             if (_isInjected)
             {
-                Debug.Log($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed. Skipping auto-injection attempt.");
+                if (enableDiagnostics)
+                    Debug.Log($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed. Skipping auto-injection attempt.");
                 WasSkipLogicHitLast = true; // Set the flag when skip logic is hit
                 return;
             }
@@ -51,7 +54,6 @@ namespace VContainer.Unity
                 else
                 {
                     LifetimeScope rootScope = null;
-                    VContainerSettings settings = VContainerSettings.Instance;
                     if (settings != null)
                     {
                         try
@@ -76,7 +78,8 @@ namespace VContainer.Unity
             {
                 resolver.InjectGameObject(this.gameObject);
                 _isInjected = true;
-                Debug.Log($"[AutoInjectComponent] Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) using {injectionSource}.");
+                if (enableDiagnostics)
+                    Debug.Log($"[AutoInjectComponent] Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) using {injectionSource}.");
             }
             else
             {
