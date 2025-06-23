@@ -15,9 +15,12 @@ namespace VContainer.Unity
 
         protected virtual void Awake()
         {
+            VContainerSettings settings = VContainerSettings.Instance;
+            var enableDiagnostics = settings.EnableDiagnostics;
             if (_isInjected)
             {
-                Debug.Log($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed by {this.GetType().Name}. Skipping auto-injection attempt.");
+                if (enableDiagnostics)
+                    Debug.Log($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed by {this.GetType().Name}. Skipping auto-injection attempt.");
                 return;
             }
 
@@ -49,7 +52,6 @@ namespace VContainer.Unity
                 else
                 {
                     LifetimeScope rootScope = null;
-                    VContainerSettings settings = VContainerSettings.Instance;
                     if (settings != null)
                     {
                         try
@@ -58,7 +60,7 @@ namespace VContainer.Unity
                         }
                         catch (System.Exception ex)
                         {
-                             Debug.LogWarning($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name}: Error trying to get root LifetimeScope. VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");
+                            Debug.LogWarning($"[AutoInjectMonoBehaviour] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name}: Error trying to get root LifetimeScope. VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");
                         }
                     }
 
@@ -74,7 +76,8 @@ namespace VContainer.Unity
             {
                 resolver.InjectGameObject(this.gameObject);
                 _isInjected = true; // Mark as injected AFTER successful injection.
-                Debug.Log($"[AutoInjectMonoBehaviour] Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name} using {injectionSource}.");
+                if (enableDiagnostics)
+                    Debug.Log($"[AutoInjectMonoBehaviour] Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) in class {this.GetType().Name} using {injectionSource}.");
             }
             else
             {
