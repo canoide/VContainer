@@ -21,7 +21,11 @@ namespace VContainer.Unity
             if (_isInjected)
             {
                 if (enableDiagnostics)
+#if UNITY_6000_4_OR_NEWER
+                    Debug.Log($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetEntityId()}) already processed. Skipping auto-injection attempt.");
+#else
                     Debug.Log($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) already processed. Skipping auto-injection attempt.");
+#endif
                 WasSkipLogicHitLast = true; // Set the flag when skip logic is hit
                 return;
             }
@@ -38,7 +42,11 @@ namespace VContainer.Unity
                 }
                 else
                 {
+#if UNITY_6000_4_OR_NEWER
+                    Debug.LogWarning($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetEntityId()}): Specified TargetScopeTag '{TargetScopeTag.name}' did not find a registered LifetimeScope. Falling back to parent/root scope search.");
+#else
                     Debug.LogWarning($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}): Specified TargetScopeTag '{TargetScopeTag.name}' did not find a registered LifetimeScope. Falling back to parent/root scope search.");
+#endif
                 }
             }
 
@@ -49,7 +57,11 @@ namespace VContainer.Unity
                 if (parentScope != null && parentScope.Container != null)
                 {
                     resolver = parentScope.Container;
+#if UNITY_6000_4_OR_NEWER
+                    injectionSource = $"parent LifetimeScope '{parentScope.name}' (ID: {parentScope.gameObject.GetEntityId()})";
+#else
                     injectionSource = $"parent LifetimeScope '{parentScope.name}' (ID: {parentScope.gameObject.GetInstanceID()})";
+#endif
                 }
                 else
                 {
@@ -62,14 +74,22 @@ namespace VContainer.Unity
                         }
                         catch (System.Exception ex)
                         {
+#if UNITY_6000_4_OR_NEWER
+                             Debug.LogWarning($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetEntityId()}): Error trying to get root LifetimeScope. VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");
+#else
                              Debug.LogWarning($"[AutoInjectComponent] {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}): Error trying to get root LifetimeScope. VContainerSettings might not be fully initialized or RootLifetimeScope prefab is missing/invalid. Error: {ex.Message}");
+#endif
                         }
                     }
 
                     if (rootScope != null && rootScope.Container != null)
                     {
                         resolver = rootScope.Container;
+#if UNITY_6000_4_OR_NEWER
+                        injectionSource = $"ROOT LifetimeScope '{rootScope.name}' (ID: {rootScope.gameObject.GetEntityId()})";
+#else
                         injectionSource = $"ROOT LifetimeScope '{rootScope.name}' (ID: {rootScope.gameObject.GetInstanceID()})";
+#endif
                     }
                 }
             }
@@ -79,14 +99,22 @@ namespace VContainer.Unity
                 resolver.InjectGameObject(this.gameObject);
                 _isInjected = true;
                 if (enableDiagnostics)
+#if UNITY_6000_4_OR_NEWER
+                    Debug.Log($"[AutoInjectComponent] Injected {this.gameObject.name} (ID: {this.gameObject.GetEntityId()}) using {injectionSource}.");
+#else
                     Debug.Log($"[AutoInjectComponent] Injected {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}) using {injectionSource}.");
+#endif
             }
             else
             {
                 // Mark as processed even if failed, to prevent re-attempts by this Awake on this instance.
                 // Other components or manual calls might still attempt injection later if needed.
                 _isInjected = true;
+#if UNITY_6000_4_OR_NEWER
+                Debug.LogWarning($"[AutoInjectComponent] Injection FAILED for {this.gameObject.name} (ID: {this.gameObject.GetEntityId()}). No suitable LifetimeScope found or container not ready.");
+#else
                 Debug.LogWarning($"[AutoInjectComponent] Injection FAILED for {this.gameObject.name} (ID: {this.gameObject.GetInstanceID()}). No suitable LifetimeScope found or container not ready.");
+#endif
             }
         }
     }
