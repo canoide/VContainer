@@ -1,9 +1,10 @@
+using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using VContainer;
 using VContainer.Unity;
-using System.Collections;
+using ToucanStudio.VContainer.AutoInject;
 
 // 1. Simple injectable service class
 public class TestService
@@ -22,10 +23,6 @@ public class ServiceConsumer : MonoBehaviour
     void Awake()
     {
         WasInjectedDuringAwake = TheService != null;
-        if (WasInjectedDuringAwake) // No VContainerSettings logging here as it's a test utility class
-        {
-            // Debug.Log($"ServiceConsumer on {gameObject.name} was injected during its Awake.", gameObject);
-        }
     }
 }
 
@@ -41,14 +38,6 @@ public class ServiceConsumerInherited : AutoInjectMonoBehaviour
     {
         base.Awake();
         WasInjectedUponOwnAwake = TheService != null;
-        if (WasInjectedUponOwnAwake)
-        {
-            // Debug.Log($"ServiceConsumerInherited on {gameObject.name} found TheService injected when its own Awake (after base.Awake) ran.", gameObject);
-        }
-        // else if(!WasInjectedUponOwnAwake && VContainerSettings.Instance != null && VContainerSettings.Instance.EnableErrorLogging)
-        // {
-        //     Debug.LogWarning($"ServiceConsumerInherited on {gameObject.name} did NOT find TheService injected when its own Awake (after base.Awake) ran.", gameObject);
-        // }
     }
 }
 

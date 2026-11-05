@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
+using VContainer.Unity;
 
-namespace VContainer.Unity
+namespace ToucanStudio.VContainer.AutoInject
 {
     public static class LifetimeScopeRegistry
     {
@@ -77,7 +79,6 @@ namespace VContainer.Unity
         {
             if (tag == null)
             {
-                // Debug.LogError("[LifetimeScopeRegistry] Cannot get scope with a null tag."); // Decided against logging error here for flexibility.
                 return null;
             }
 

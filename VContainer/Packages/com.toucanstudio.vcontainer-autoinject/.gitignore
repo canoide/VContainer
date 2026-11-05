@@ -1,0 +1,3 @@
+# Allow Unity package documentation folder despite root gitignore *~
+!Documentation~/
+!Documentation~/**

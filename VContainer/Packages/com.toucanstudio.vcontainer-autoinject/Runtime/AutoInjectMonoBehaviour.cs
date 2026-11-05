@@ -1,8 +1,8 @@
 using UnityEngine;
-using VContainer; // Required for IObjectResolver
-using VContainer.Unity; // Required for LifetimeScope, VContainerSettings, LifetimeScopeTag, LifetimeScopeRegistry
+using VContainer; // Required for IObjectResolver, InjectGameObject
+using VContainer.Unity; // Required for LifetimeScope, VContainerSettings
 
-namespace VContainer.Unity
+namespace ToucanStudio.VContainer.AutoInject
 {
     [DefaultExecutionOrder(-4900)] // Keep existing execution order
     [Tooltip("Base class for MonoBehaviours that should automatically have dependencies injected by VContainer upon Awake. Can use a specific LifetimeScopeTag, a parent LifetimeScope, or falls back to the root scope.")]
@@ -16,7 +16,7 @@ namespace VContainer.Unity
         protected virtual void Awake()
         {
             VContainerSettings settings = VContainerSettings.Instance;
-            var enableDiagnostics = settings.EnableDiagnostics;
+            var enableDiagnostics = settings != null && settings.EnableDiagnostics;
             if (_isInjected)
             {
                 if (enableDiagnostics)

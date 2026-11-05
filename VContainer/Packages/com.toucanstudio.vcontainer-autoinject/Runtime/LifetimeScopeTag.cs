@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace VContainer.Unity
+namespace ToucanStudio.VContainer.AutoInject
 {
     [CreateAssetMenu(fileName = "NewLifetimeScopeTag", menuName = "VContainer/Lifetime Scope Tag")]
     public class LifetimeScopeTag : ScriptableObject

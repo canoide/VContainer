@@ -1,0 +1,21 @@
+{
+    "name": "ToucanStudio.VContainer.AutoInject.Tests",
+    "rootNamespace": "ToucanStudio.VContainer.AutoInject.Tests",
+    "references": [
+        "ToucanStudio.VContainer.AutoInject",
+        "VContainer",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

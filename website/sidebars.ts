@@ -27,7 +27,6 @@ const sidebars: SidebarsConfig = {
       'resolving/method-injection',
       'resolving/property-field-injection',
       'resolving/gameobject-injection',
-      'resolving/automatic-instantiate-injection', // Added new page here
       'resolving/container-api',
     ],
     'Registering': [
