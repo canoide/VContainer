@@ -12,3 +12,4 @@ All notable changes to this package will be documented in this file.
 - Support for Unity 6000.4+ (`GetEntityId()`) and legacy Unity versions (`GetInstanceID()`).
 - Automated tests suite in `Tests/Runtime`.
 - Documentation and AI assistant guide in `README.md` and `Documentation~/index.md`.
+

@@ -119,3 +119,4 @@ When writing code that uses this package:
 ## 📄 License
 
 This package is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+

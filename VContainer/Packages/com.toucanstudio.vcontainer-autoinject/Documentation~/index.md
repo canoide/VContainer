@@ -137,3 +137,4 @@ Logs include:
 - `[AutoInjectComponent] Injected <GameObject> using <ScopeSource>.`
 - `[AutoInjectComponent] <GameObject> already processed. Skipping auto-injection attempt.`
 - Supports Unity 6000.4+ `GetEntityId()` and legacy `GetInstanceID()`.
+
