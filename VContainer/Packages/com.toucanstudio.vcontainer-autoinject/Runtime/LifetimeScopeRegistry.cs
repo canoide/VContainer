@@ -1,12 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 using VContainer;
 using VContainer.Unity;
 
 namespace ToucanStudio.VContainer.AutoInject
 {
-    [MovedFrom("VContainer.Unity")]
     public static class LifetimeScopeRegistry
     {
         private static readonly Dictionary<LifetimeScopeTag, LifetimeScope> taggedScopes = new Dictionary<LifetimeScopeTag, LifetimeScope>();

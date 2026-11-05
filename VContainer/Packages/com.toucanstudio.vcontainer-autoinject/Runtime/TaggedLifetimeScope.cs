@@ -1,10 +1,8 @@
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 using VContainer.Unity;
 
 namespace ToucanStudio.VContainer.AutoInject
 {
-    [MovedFrom("VContainer.Unity")]
     [DefaultExecutionOrder(-4950)] // Slightly after LifetimeScope's default (-5000) to ensure base Awake runs first.
     public class TaggedLifetimeScope : LifetimeScope
     {

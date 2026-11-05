@@ -1,11 +1,9 @@
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 using VContainer; // Required for IObjectResolver, InjectGameObject
 using VContainer.Unity; // Required for LifetimeScope, VContainerSettings
 
 namespace ToucanStudio.VContainer.AutoInject
 {
-    [MovedFrom("VContainer.Unity")]
     [DefaultExecutionOrder(-4900)] // Keep existing execution order
     [Tooltip("Base class for MonoBehaviours that should automatically have dependencies injected by VContainer upon Awake. Can use a specific LifetimeScopeTag, a parent LifetimeScope, or falls back to the root scope.")]
     public abstract class AutoInjectMonoBehaviour : MonoBehaviour
